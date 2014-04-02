@@ -95,7 +95,7 @@ public class LilypadListener {
                     case RESEND:
                         for (Player player: plugin.getServer().getOnlinePlayers()) {
                             String msg = Actions.ADD.getIDString() + '\0' +player.getName() + '\0' +
-                                    player.getServer().getName() + '\0' + player.getWorld().getName() + '\0' +
+                                    handler.getServerName() + '\0' + player.getWorld().getName() + '\0' +
                                     handler.isVanished(player);
                             plugin.dispatchMessage(channelname, msg);
                         }
