@@ -27,7 +27,11 @@ public class PlayerListener implements Listener {
             return; // We do not wish to track blocked logins
 
         Player player = event.getPlayer();
-        String msg =  Actions.ADD.getIDString() + '\0' + player.getName() + '\0' + handler.getServerName() + '\0' + player.getWorld().getName() + '\0' + handler.isVanished(player);
+
+        if (LilypadOnlinePlayers.DEBUG)
+            plugin.getLogger().info("Player " + player + " logged in to " + player.getWorld() + " and are " + handler.isVisible(player));
+
+        String msg =  Actions.ADD.getIDString() + '\0' + player.getName() + '\0' + handler.getServerName() + '\0' + player.getWorld().getName() + '\0' + handler.isVisible(player);
         plugin.dispatchMessage(channelname, msg);
     }
 

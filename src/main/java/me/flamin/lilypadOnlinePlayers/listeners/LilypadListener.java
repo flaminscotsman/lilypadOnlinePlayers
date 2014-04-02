@@ -49,12 +49,12 @@ public class LilypadListener {
                         entry = new PlayerEntry();
                         entry.setName(tokens[1]);
                         entry.setServer(tokens[2]);
-                        entry.setVisible(Boolean.getBoolean(tokens[4]));
+                        entry.setVisible(Boolean.valueOf(tokens[4]));
                         entry.setWorld(tokens[3]);
 
                         if (LilypadOnlinePlayers.DEBUG)
                             plugin.getLogger().severe("Player " + tokens[1] + " has joined " + tokens[3] +
-                                ". Entry Contains" + entry.getName() + ", " + entry.getWorld() + ".");
+                                ". Entry Contains" + entry.getName() + ", " + entry.getWorld() + ", " + entry.getVisible() + ".");
                         if (handler.isPlayerExpired(tokens[1]))
                             handler.unExpirePlayer(tokens[1]);
                         handler.addPlayer(tokens[1], entry);
@@ -65,9 +65,9 @@ public class LilypadListener {
                             return;
 
                         entry = handler.getPlayer(tokens[1]);
-						
-                        if (!tokens[2].equals(entry.getServer()))
-                            return;
+                        if (!event.getSender().equals(entry.getServer()))
+                            break;
+
                         handler.expirePlayer(tokens[1]);
                         plugin.getServer().getScheduler().runTaskLater(
                                 plugin, new tidyUp(handler, entry.getName()), 1
@@ -96,7 +96,7 @@ public class LilypadListener {
                         for (Player player: plugin.getServer().getOnlinePlayers()) {
                             String msg = Actions.ADD.getIDString() + '\0' +player.getName() + '\0' +
                                     handler.getServerName() + '\0' + player.getWorld().getName() + '\0' +
-                                    handler.isVanished(player);
+                                    handler.isVisible(player);
                             plugin.dispatchMessage(channelname, msg);
                         }
                         break;
@@ -124,13 +124,13 @@ public class LilypadListener {
     public void onServerAdd(final ServerAddEvent event) {
         if (event.getServer().equals(plugin.getServer().getName())) {
             for (Player player: plugin.getServer().getOnlinePlayers()) {
-                String msg =  Actions.ADD.getIDString() + '\0' + player.getName() + '\0' + player.getServer().getName() + '\0' + player.getWorld().getName() + '\0' + handler.isVanished(player);
+                String msg =  Actions.ADD.getIDString() + '\0' + player.getName() + '\0' + player.getServer().getName() + '\0' + player.getWorld().getName() + '\0' + handler.isVisible(player);
                 plugin.dispatchMessage(channelname, msg);
             }
         } else {
             String target = event.getServer();
             for (Player player: plugin.getServer().getOnlinePlayers()) {
-                String msg = Actions.ADD.getIDString() + '\0' + player.getName() + '\0' + player.getServer().getName() + '\0' + player.getWorld().getName() + '\0' + handler.isVanished(player);
+                String msg = Actions.ADD.getIDString() + '\0' + player.getName() + '\0' + player.getServer().getName() + '\0' + player.getWorld().getName() + '\0' + handler.isVisible(player);
                 plugin.dispatchMessage(target, channelname, msg);
             }
         }
