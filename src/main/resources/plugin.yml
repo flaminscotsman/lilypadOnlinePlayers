@@ -1,0 +1,35 @@
+##  Plugin Information  ##
+name: ${project.name}
+version: ${project.build.version}
+description: ${project.description}
+##  Original Author     ##
+author: flamin_scotsman
+website: ${project.url}
+main: me.flamin.lilypadOnlinePlayers.LilypadOnlinePlayers
+database: false
+depend: [LilyPad-Connect]
+softdepend: [VanishNoPacket]
+commands:
+    forceremove:
+        description: Forces a player to be unregistered from being on this server.
+        permission: lilyPadOnlinePlayers.remove
+        usage: /forceremove <playername>
+    refreshplayers:
+        description: Refreshes the currently online players from other servers.
+        permission: lilyPadOnlinePlayers.reset
+    queryplayer:
+        description: Shows information about a specified player.
+        permission: lilyPadOnlinePlayers.query
+    listtrackedplayers:
+        description: Lists players currently tracked on other servers in the hub.
+        permission: lilyPadOnlinePlayers.query
+permissions:
+    lilyPadOnlinePlayers.remove:
+        description: Allows a user to remove a player from the distributed online list.
+        default: op
+    lilyPadOnlinePlayers.refresh:
+        description: Allows a user to refresh the online player cache.
+        default: op
+    lilyPadOnlinePlayers.query:
+        description: Allows a user to inspect a member of the online player cache.
+        default: op
