@@ -59,5 +59,5 @@ public class HubPlayerJoinEvent extends Event {
      *
      * @return the player changing visibility
      */
-    public boolean getVisibility() { return this.visible; }
+    public boolean getVisibile() { return this.visible; }
 }

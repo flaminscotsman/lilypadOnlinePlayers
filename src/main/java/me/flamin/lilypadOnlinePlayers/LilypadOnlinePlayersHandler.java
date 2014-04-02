@@ -14,7 +14,7 @@ public class LilypadOnlinePlayersHandler {
 
     public LilypadOnlinePlayers getPlugin() { return plugin; }
 
-    public boolean isVanished(Player player) { return plugin.isVanished(player); }
+    public boolean isVisible(Player player) { return plugin.isVisible(player); }
 
     public Map<String, PlayerEntry> getPlayers() { return Collections.unmodifiableMap(plugin.onlinePlayers); }
 

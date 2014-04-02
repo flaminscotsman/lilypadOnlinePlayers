@@ -42,4 +42,13 @@ public class HubPlayerVisibilityChangeEvent extends Event {
     public boolean isVanishing() {
         return this.vanishing;
     }
+
+    /**
+     * Gets if the player will be visible
+     *
+     * @return true if vanishing, false is revealing
+     */
+    public boolean isVisible() {
+        return !this.vanishing;
+    }
 }
