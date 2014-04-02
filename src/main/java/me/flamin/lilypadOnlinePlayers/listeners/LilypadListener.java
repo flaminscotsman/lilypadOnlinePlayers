@@ -114,9 +114,6 @@ public class LilypadListener {
         for (Map.Entry<String, PlayerEntry> iterEntry : handler.getPlayers().entrySet()) {
             PlayerEntry entry = iterEntry.getValue();
 
-            if (!entry.getServer().equals(event.getServer()))
-                return;
-
             handler.expirePlayer(entry.getName());
             plugin.getServer().getScheduler().runTaskLater(plugin, new tidyUp(handler, entry.getName()), 1);
             plugin.getServer().getPluginManager().callEvent(new HubPlayerQuitEvent(entry.getName()));
