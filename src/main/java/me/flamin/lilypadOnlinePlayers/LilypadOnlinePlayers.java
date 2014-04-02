@@ -95,8 +95,8 @@ public class LilypadOnlinePlayers extends JavaPlugin {
         return result[0];
     }
 
-    public boolean getVisibility(Player player) {
-        return vanishplugin == null || !vanishplugin.getManager().isVanished(player);
+    public boolean isVanished(Player player) {
+        return !(vanishplugin == null) && vanishplugin.getManager().isVanished(player);
     }
 }
 

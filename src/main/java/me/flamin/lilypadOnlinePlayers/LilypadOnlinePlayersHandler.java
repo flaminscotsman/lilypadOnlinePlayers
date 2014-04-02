@@ -4,7 +4,6 @@ import org.bukkit.entity.Player;
 
 import java.util.Collections;
 import java.util.Map;
-import java.util.logging.Logger;
 
 public class LilypadOnlinePlayersHandler {
     private final LilypadOnlinePlayers plugin;
@@ -15,7 +14,7 @@ public class LilypadOnlinePlayersHandler {
 
     public LilypadOnlinePlayers getPlugin() { return plugin; }
 
-    public boolean getVisibility(Player player) { return plugin.getVisibility(player); }
+    public boolean isVanished(Player player) { return plugin.isVanished(player); }
 
     public Map<String, PlayerEntry> getPlayers() { return Collections.unmodifiableMap(plugin.onlinePlayers); }
 
