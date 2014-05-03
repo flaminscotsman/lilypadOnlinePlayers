@@ -18,9 +18,10 @@ import me.flamin.lilypadOnlinePlayers.listeners.PlayerListener;
 import org.kitteh.vanish.VanishPlugin;
 
 import java.util.*;
+import java.util.logging.Handler;
+import java.util.logging.Logger;
 
 public class LilypadOnlinePlayers extends JavaPlugin {
-    public static final boolean DEBUG = false;
     final Map<String, PlayerEntry> onlinePlayers = new HashMap<String, PlayerEntry>();
     final Set<String> expiredPlayers = new HashSet<String>();
     private Connect connect;
@@ -54,6 +55,7 @@ public class LilypadOnlinePlayers extends JavaPlugin {
             }
         }
 
+
         connect.registerEvents(new LilypadListener(handler));
         getServer().getPluginManager().registerEvents(new PlayerListener(handler), this);
 
@@ -61,6 +63,12 @@ public class LilypadOnlinePlayers extends JavaPlugin {
         getCommand("listtrackedplayers").setExecutor(new ListTrackedPlayersCommand(handler));
         getCommand("refreshplayers").setExecutor(new RefreshPlayersCommand(handler));
         getCommand("queryplayer").setExecutor(new QueryPlayerCommand(handler));
+    }
+
+    public void onDisable() {
+        getServer().getServicesManager().unregister(
+                LilypadOnlinePlayersHandler.class, handler
+        );
     }
 
     private boolean hookLilypad() {
