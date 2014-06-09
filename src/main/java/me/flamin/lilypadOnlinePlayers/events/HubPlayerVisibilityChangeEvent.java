@@ -4,6 +4,8 @@ import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 import me.flamin.lilypadOnlinePlayers.PlayerEntry;
 
+import java.util.UUID;
+
 public class HubPlayerVisibilityChangeEvent extends Event {
     private static final HandlerList handlers = new HandlerList();
 
@@ -13,15 +15,24 @@ public class HubPlayerVisibilityChangeEvent extends Event {
     public static HandlerList getHandlerList() { return handlers; }
 
     private final String name;
+    private final UUID uuid;
     private final boolean vanishing;
 
     public HubPlayerVisibilityChangeEvent(String name, boolean vanishing) {
         this.name = name;
+        this.uuid = null;
+        this.vanishing = vanishing;
+    }
+
+    public HubPlayerVisibilityChangeEvent(String name, UUID uuid, boolean vanishing) {
+        this.name = name;
+        this.uuid = uuid;
         this.vanishing = vanishing;
     }
 
     public HubPlayerVisibilityChangeEvent(PlayerEntry entry) {
         this.name = entry.getName();
+        this.uuid = entry.getUUID();
         this.vanishing = entry.getVisible();
     }
 
@@ -33,6 +44,13 @@ public class HubPlayerVisibilityChangeEvent extends Event {
     public String getName() {
         return this.name;
     }
+
+    /**
+     * Gets the UUID of the joining player
+     *
+     * @return UUID of the user
+     */
+    public UUID getUUID() { return this.uuid; }
 
     /**
      * Gets the new visibility of the player

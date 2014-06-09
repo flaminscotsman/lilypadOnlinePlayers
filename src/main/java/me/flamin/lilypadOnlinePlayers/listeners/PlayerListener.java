@@ -31,7 +31,7 @@ public class PlayerListener implements Listener {
         if (plugin.getConfig().getInt("debugLevel", 0) > 0)
             plugin.getLogger().info("Local player " + player.getName() + " logged in to " + player.getWorld().getName() + " and are " + (handler.isVisible(player)?"visible":"invisible") + ".");
 
-        String msg =  Actions.ADD.getIDString() + '\0' + player.getName() + '\0' + handler.getServerName() + '\0' + player.getWorld().getName() + '\0' + handler.isVisible(player);
+        String msg =  Actions.ADD.getIDString() + '\0' + player.getName() + '\0' + player.getUniqueId().toString() + '\0' + handler.getServerName() + '\0' + player.getWorld().getName() + '\0' + handler.isVisible(player);
         plugin.dispatchMessage(channelname, msg);
     }
 
@@ -40,16 +40,16 @@ public class PlayerListener implements Listener {
         if (plugin.getConfig().getInt("debugLevel", 0) > 0)
             plugin.getLogger().info("Local player " + event.getPlayer().getName() + " quit.");
 
-        String msg =  Actions.REMOVE.getIDString() + '\0' + event.getPlayer().getName() + '\0' + handler.getServerName();
+        String msg =  Actions.REMOVE.getIDString() + '\0' + event.getPlayer().getName() + '\0' + event.getPlayer().getUniqueId().toString() + '\0' + handler.getServerName();
         plugin.dispatchMessage(channelname, msg);
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onPlayerStatusChange(final VanishStatusChangeEvent event) {
         if (plugin.getConfig().getInt("debugLevel", 0) > 0)
-            plugin.getLogger().info("Local player " + event.getName() + " has " + (event.isVanishing()?"vanished":"unvanished") + ".");
+            plugin.getLogger().info("Local player " + event.getPlayer().getName() + " has " + (event.isVanishing()?"vanished":"unvanished") + ".");
 
-        String msg = (event.isVanishing()?Actions.VANISH:Actions.SHOW).getIDString() + '\0' + event.getName() + '\0' + handler.getServerName();
+        String msg = (event.isVanishing()?Actions.VANISH:Actions.SHOW).getIDString() + '\0' + event.getPlayer().getName() + '\0' + event.getPlayer().getUniqueId() + '\0' + handler.getServerName();
         plugin.dispatchMessage(channelname, msg);
     }
 }

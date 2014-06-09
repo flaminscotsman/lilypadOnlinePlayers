@@ -4,6 +4,8 @@ import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 import me.flamin.lilypadOnlinePlayers.PlayerEntry;
 
+import java.util.UUID;
+
 public class HubPlayerJoinEvent extends Event {
     private static final HandlerList handlers = new HandlerList();
 
@@ -15,12 +17,23 @@ public class HubPlayerJoinEvent extends Event {
     }
 
     private final String name;
+    private final UUID uuid;
     private final String server;
     private final String world;
     private final boolean visible;
 
+    @Deprecated
     public HubPlayerJoinEvent(String name, String world, String server, boolean visible) {
         this.name = name;
+        this.uuid = null;
+        this.server = server;
+        this.world = world;
+        this.visible = visible;
+    }
+
+    public HubPlayerJoinEvent(String name, UUID uuid, String world, String server, boolean visible) {
+        this.name = name;
+        this.uuid = uuid;
         this.server = server;
         this.world = world;
         this.visible = visible;
@@ -28,6 +41,7 @@ public class HubPlayerJoinEvent extends Event {
 
     public HubPlayerJoinEvent(PlayerEntry entry) {
         this.name = entry.getName();
+        this.uuid = entry.getUUID();
         this.server = entry.getServer();
         this.world = entry.getWorld();
         this.visible = entry.getVisible();
@@ -39,6 +53,13 @@ public class HubPlayerJoinEvent extends Event {
      * @return name of the user
      */
     public String getName() { return this.name; }
+
+    /**
+     * Gets the UUID of the joining player
+     *
+     * @return UUID of the user
+     */
+    public UUID getUUID() { return this.uuid; }
 
     /**
      * Gets the server containing the player

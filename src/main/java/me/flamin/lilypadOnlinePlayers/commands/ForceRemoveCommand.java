@@ -3,11 +3,14 @@ package me.flamin.lilypadOnlinePlayers.commands;
 import me.flamin.lilypadOnlinePlayers.Actions;
 import me.flamin.lilypadOnlinePlayers.LilypadOnlinePlayersHandler;
 import me.flamin.lilypadOnlinePlayers.LilypadOnlinePlayers;
+import me.flamin.lilypadOnlinePlayers.PlayerEntry;
 import me.flamin.lilypadOnlinePlayers.events.HubPlayerQuitEvent;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+
+import java.util.Map;
 
 
 public class ForceRemoveCommand implements CommandExecutor {
@@ -30,13 +33,13 @@ public class ForceRemoveCommand implements CommandExecutor {
             return false;
         }
 
-        String player = "";
+        PlayerEntry player = null;
         String matcher = args[0].toLowerCase();
         int matches = 0;
 
-        for (String entry : handler.getPlayers().keySet()) {
-            if (entry.toLowerCase().startsWith(matcher)) {
-                player = entry;
+        for (Map.Entry<String, PlayerEntry> entry : handler.getPlayers().entrySet()) {
+            if (entry.getKey().toLowerCase().startsWith(matcher)) {
+                player = entry.getValue();
                 matches++;
             }
         }
@@ -51,7 +54,7 @@ public class ForceRemoveCommand implements CommandExecutor {
             return false;
         }
 
-        if (plugin.getServer().getPlayer(player) != null) {
+        if (plugin.getServer().getPlayer(player.getUUID()) != null) {
             commandSender.sendMessage("Unable to remove player " + player
                     + " as they are currently logged in to this server.");
             return false;
@@ -60,8 +63,8 @@ public class ForceRemoveCommand implements CommandExecutor {
         String msg =  Actions.REMOVE.getIDString() + '\0' + player + '\0' + handler.getServerName();
         plugin.dispatchMessage(channelname, msg);
 
-        handler.expirePlayer(player);
-        plugin.getServer().getScheduler().runTaskLater(plugin, new tidyUp(handler, player), 1);
+        handler.expirePlayer(player.getName());
+        plugin.getServer().getScheduler().runTaskLater(plugin, new tidyUp(handler, player.getName()), 1);
         plugin.getServer().getPluginManager().callEvent(new HubPlayerQuitEvent(player));
 
         commandSender.sendMessage("Removed player " + player + " from " + handler.getServerName() + ".");

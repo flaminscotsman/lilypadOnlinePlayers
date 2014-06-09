@@ -50,24 +50,37 @@ public class LilypadListener {
                 PlayerEntry entry;
 
                 switch (action) {
-                    case ADD:
+                    case ADD: case LEGACY_ADD:
                         entry = new PlayerEntry();
+
                         entry.setName(tokens[1]);
-                        entry.setServer(tokens[2]);
-                        entry.setVisible(Boolean.valueOf(tokens[4]));
-                        entry.setWorld(tokens[3]);
+                        if (action == Actions.ADD) {
+                            entry.setUUID(tokens[2]);
+                            entry.setServer(tokens[3]);
+                            entry.setVisible(Boolean.valueOf(tokens[5]));
+                            entry.setWorld(tokens[4]);
+                        } else if (action == Actions.LEGACY_ADD) {
+                            // TODO: Add uuid parsing
+                            entry.setServer(tokens[2]);
+                            entry.setVisible(Boolean.valueOf(tokens[4]));
+                            entry.setWorld(tokens[3]);
+                        }
 
                         if (plugin.getConfig().getInt("debugLevel", 0) > 0)
-                            plugin.getLogger().severe("Player " + tokens[1] + " has joined " + tokens[3] +
-                                    ". Entry Contains: " + entry.getName() + ", " + entry.getWorld() + ", " + entry.getVisible() + ".");
+                            plugin.getLogger().severe("Player " + tokens[1] + " has joined " + tokens[3]
+                                    + ". Entry Contains: " + entry.getName() + ", " + entry.getWorld() + ", "
+                                    + entry.getVisible() + ".");
+
                         if (plugin.getConfig().getInt("debugLevel", 0) > 2 && handler.isPlayerExpired(tokens[1]))
                             plugin.getLogger().severe("Unexpiring " + tokens[1] + " on rejoin.");
+
                         if (handler.isPlayerExpired(tokens[1]))
                             handler.unExpirePlayer(tokens[1]);
+
                         handler.addPlayer(tokens[1], entry);
                         plugin.getServer().getPluginManager().callEvent(new HubPlayerJoinEvent(entry));
                         break;
-                    case REMOVE:
+                    case REMOVE: case LEGACY_REMOVE:
                         if (!handler.containsPlayer(tokens[1]))
                             return;
 
@@ -91,18 +104,29 @@ public class LilypadListener {
                         plugin.getServer().getScheduler().runTaskLater(
                                 plugin, new tidyUp(handler, entry.getName()), 1
                         );
-                        plugin.getServer().getPluginManager().callEvent(new HubPlayerQuitEvent(tokens[1]));
+
+                        if (action == Actions.REMOVE) {
+                            plugin.getServer().getPluginManager().callEvent(new HubPlayerQuitEvent(tokens[1], tokens[2]));
+                        }else {
+                            if (handler.containsPlayer(tokens[1])) {
+                                plugin.getServer().getPluginManager().callEvent(new HubPlayerQuitEvent(handler.getPlayer(tokens[1])));
+                            } else {
+                                plugin.getServer().getPluginManager().callEvent(new HubPlayerQuitEvent(tokens[1]));
+                            }
+                        }
                         break;
-                    case MOVEWORLD:
+                    case MOVEWORLD: case LEGACY_MOVEWORLD:
                         entry = handler.getPlayer(tokens[1]);
                         if (plugin.getConfig().getInt("debugLevel", 0) > 0)
-                            plugin.getLogger().severe("Player " + tokens[1] + " has switched from " + entry.getWorld() + " to " + tokens[2] + ".");
+                            plugin.getLogger().severe("Player " + tokens[1] + " has switched from "+ entry.getWorld()
+                                    + " to " + tokens[2 + ((action == Actions.MOVEWORLD)?1:0)] + ".");
 
-                        entry.setWorld(tokens[2]);
+                        entry.setWorld(tokens[2 + ((action == Actions.MOVEWORLD)?1:0)]);
+
                         handler.addPlayer(tokens[1], entry);
                         plugin.getServer().getPluginManager().callEvent(new HubPlayerWorldChangeEvent(entry));
                         break;
-                    case VANISH:
+                    case VANISH: case LEGACY_VANISH:
                         entry = handler.getPlayer(tokens[1]);
                         if (plugin.getConfig().getInt("debugLevel", 0) > 0)
                             plugin.getLogger().severe("Player " + tokens[1] + " has become invisible.");
@@ -111,7 +135,7 @@ public class LilypadListener {
                         handler.addPlayer(tokens[1], entry);
                         plugin.getServer().getPluginManager().callEvent(new HubPlayerVisibilityChangeEvent(entry));
                         break;
-                    case SHOW:
+                    case SHOW: case LEGACY_SHOW:
                         entry = handler.getPlayer(tokens[1]);
                         if (plugin.getConfig().getInt("debugLevel", 0) > 0)
                             plugin.getLogger().severe("Player " + tokens[1] + " has become visible.");
@@ -153,7 +177,7 @@ public class LilypadListener {
 
             handler.expirePlayer(entry.getName());
             plugin.getServer().getScheduler().runTaskLater(plugin, new tidyUp(handler, entry.getName()), 1);
-            plugin.getServer().getPluginManager().callEvent(new HubPlayerQuitEvent(entry.getName()));
+            plugin.getServer().getPluginManager().callEvent(new HubPlayerQuitEvent(entry));
         }
     }
 

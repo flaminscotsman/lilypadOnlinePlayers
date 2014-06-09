@@ -4,12 +4,17 @@ import java.util.HashMap;
 import java.util.Map;
 
 public enum Actions {
-    ADD(0),
-    REMOVE(1),
-    MOVEWORLD(2),
-    VANISH(3),
-    SHOW(4),
-    RESEND(5);
+    LEGACY_ADD(0),            // 0  | name | server | world | visibility
+    LEGACY_REMOVE(1),         // 1  | name
+    LEGACY_MOVEWORLD(2),      // 2  | name | world
+    LEGACY_VANISH(3),         // 3  | name
+    LEGACY_SHOW(4),           // 4  | name
+    RESEND(5),                // 5
+    ADD(6),                   // 6  | name | uuid | server | world | visibility
+    REMOVE(7),                // 7  | name | uuid
+    MOVEWORLD(8),             // 8  | name | uuid | world
+    VANISH(9),                // 9  | name | uuid
+    SHOW(10);                 // 10 | name | uuid
 
     final int id;
     private static final Map<Integer, Actions> cachedValues = new HashMap<Integer, me.flamin.lilypadOnlinePlayers.Actions>();

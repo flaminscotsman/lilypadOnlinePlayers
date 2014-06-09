@@ -32,9 +32,10 @@ public class QueryPlayerCommand implements CommandExecutor {
         String[] messages = new String[4];
 
         messages[0] = "Information for player " + entry.getName() + ":";
-        messages[1] = "Server: " + entry.getServer();
-        messages[2] = "World: " + entry.getWorld();
-        messages[3] = "Visibility: " + (entry.getVisible() ? "visible" : "vanished");
+        messages[1] = "UUID: " + (entry.getUUID()==null ? "null" : entry.getUUID().toString());
+        messages[2] = "Server: " + entry.getServer();
+        messages[3] = "World: " + entry.getWorld();
+        messages[4] = "Visibility: " + (entry.getVisible() ? "visible" : "vanished");
 
         commandSender.sendMessage(messages);
         return true;

@@ -36,7 +36,7 @@ public class RefreshPlayersCommand implements CommandExecutor {
             plugin.getServer().getScheduler().runTaskLater(
                     plugin, new tidyUp(handler, entry.getName()), 1
             );
-            plugin.getServer().getPluginManager().callEvent(new HubPlayerQuitEvent(entry.getName()));
+            plugin.getServer().getPluginManager().callEvent(new HubPlayerQuitEvent(entry));
         }
 
         String msg =  Actions.RESEND.getIDString();
