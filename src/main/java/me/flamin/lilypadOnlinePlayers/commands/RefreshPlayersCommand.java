@@ -5,6 +5,8 @@ import me.flamin.lilypadOnlinePlayers.LilypadOnlinePlayersHandler;
 import me.flamin.lilypadOnlinePlayers.LilypadOnlinePlayers;
 import me.flamin.lilypadOnlinePlayers.PlayerEntry;
 import me.flamin.lilypadOnlinePlayers.events.HubPlayerQuitEvent;
+import me.flamin.lilypadOnlinePlayers.packets.AbstractPacket;
+import me.flamin.lilypadOnlinePlayers.packets.Packet_RESEND;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -39,8 +41,8 @@ public class RefreshPlayersCommand implements CommandExecutor {
             plugin.getServer().getPluginManager().callEvent(new HubPlayerQuitEvent(entry));
         }
 
-        String msg =  Actions.RESEND.getIDString();
-        plugin.dispatchMessage(channelname, msg);
+        AbstractPacket packet = new Packet_RESEND();
+        plugin.dispatchMessage(channelname, packet.toString());
         commandSender.sendMessage("Initiated playerlist refresh.");
         return true;
     }

@@ -1,6 +1,8 @@
 package me.flamin.lilypadOnlinePlayers.listeners;
 
 import me.flamin.lilypadOnlinePlayers.LilypadOnlinePlayersHandler;
+import me.flamin.lilypadOnlinePlayers.Verbosity;
+import me.flamin.lilypadOnlinePlayers.packets.*;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -28,28 +30,64 @@ public class PlayerListener implements Listener {
 
         Player player = event.getPlayer();
 
-        if (plugin.getConfig().getInt("debugLevel", 0) > 0)
-            plugin.getLogger().info("Local player " + player.getName() + " logged in to " + player.getWorld().getName() + " and are " + (handler.isVisible(player)?"visible":"invisible") + ".");
+        if (handler.isLogged(Verbosity.VerbosityLevels.SHOW_MOVEMENTS))
+            plugin.getLogger().severe(String.format(
+                    "[%1$s] - Local player %2$s %3$s joined this server (%4$s).",
+                    plugin.getDescription().getName(),
+                    (
+                            handler.isLogged(Verbosity.VerbosityLevels.SHOW_UUIDS) ?
+                                    player.getName() + " [" + player.getUniqueId().toString() + "]" :
+                                    player.getName()
+                    ),
+                    (handler.isVisible(player)?"visibly":"invisibly"),
+                    handler.getServerName()
+            ));
 
-        String msg =  Actions.ADD.getIDString() + '\0' + player.getName() + '\0' + player.getUniqueId().toString() + '\0' + handler.getServerName() + '\0' + player.getWorld().getName() + '\0' + handler.isVisible(player);
-        plugin.dispatchMessage(channelname, msg);
+        AbstractPacket packet = new Packet_ADD();
+        packet.encode(player, handler);
+
+        plugin.dispatchMessage(channelname, packet.toString());
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onPlayerLogout(final PlayerQuitEvent event) {
-        if (plugin.getConfig().getInt("debugLevel", 0) > 0)
-            plugin.getLogger().info("Local player " + event.getPlayer().getName() + " quit.");
+        Player player = event.getPlayer();
 
-        String msg =  Actions.REMOVE.getIDString() + '\0' + event.getPlayer().getName() + '\0' + event.getPlayer().getUniqueId().toString() + '\0' + handler.getServerName();
-        plugin.dispatchMessage(channelname, msg);
+        if (handler.isLogged(Verbosity.VerbosityLevels.SHOW_MOVEMENTS))
+            plugin.getLogger().severe(String.format(
+                    "[%1$s] - Local player %2$s left this server (%3$s).",
+                    plugin.getDescription().getName(),
+                    (
+                            handler.isLogged(Verbosity.VerbosityLevels.SHOW_UUIDS) ?
+                                    player.getName() + " [" + player.getUniqueId().toString() + "]" :
+                                    player.getName()
+                    ),
+                    handler.getServerName()
+            ));
+
+        AbstractPacket packet = new Packet_REMOVE();
+        packet.encode(player, handler);
+
+        plugin.dispatchMessage(channelname, packet.toString());
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onPlayerStatusChange(final VanishStatusChangeEvent event) {
-        if (plugin.getConfig().getInt("debugLevel", 0) > 0)
-            plugin.getLogger().info("Local player " + event.getPlayer().getName() + " has " + (event.isVanishing()?"vanished":"unvanished") + ".");
+        if (handler.isLogged(Verbosity.VerbosityLevels.SHOW_MOVEMENTS))
+            plugin.getLogger().severe(String.format(
+                    "[%1$s] - Local player %2$s has %3$s.",
+                    plugin.getDescription().getName(),
+                    (
+                            handler.isLogged(Verbosity.VerbosityLevels.SHOW_UUIDS) ?
+                                    event.getPlayer().getName() + " [" + event.getPlayer().getUniqueId().toString() + "]" :
+                                    event.getPlayer().getName()
+                    ),
+                    (handler.isVisible(event.getPlayer())?"vanished":"unvanished")
+            ));
 
-        String msg = (event.isVanishing()?Actions.VANISH:Actions.SHOW).getIDString() + '\0' + event.getPlayer().getName() + '\0' + event.getPlayer().getUniqueId() + '\0' + handler.getServerName();
-        plugin.dispatchMessage(channelname, msg);
+        AbstractPacket packet = event.isVanishing() ? new Packet_VANISH() : new Packet_SHOW();
+        packet.encode(event.getPlayer(), handler);
+
+        plugin.dispatchMessage(channelname, packet.toString());
     }
 }

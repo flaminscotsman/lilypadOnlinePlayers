@@ -18,14 +18,16 @@ import me.flamin.lilypadOnlinePlayers.listeners.PlayerListener;
 import org.kitteh.vanish.VanishPlugin;
 
 import java.util.*;
-import java.util.logging.Handler;
-import java.util.logging.Logger;
 
 public class LilypadOnlinePlayers extends JavaPlugin {
+    public static final String channelname = "lilypadPlayers";
+
     final Map<String, PlayerEntry> onlinePlayers = new HashMap<String, PlayerEntry>();
     final Set<String> expiredPlayers = new HashSet<String>();
-    private Connect connect;
+    EnumSet<Verbosity.VerbosityLevels> verbosity;
     String servername;
+
+    private Connect connect;
     private VanishPlugin vanishplugin;
     private LilypadOnlinePlayersHandler handler;
 
@@ -63,6 +65,8 @@ public class LilypadOnlinePlayers extends JavaPlugin {
         getCommand("listtrackedplayers").setExecutor(new ListTrackedPlayersCommand(handler));
         getCommand("refreshplayers").setExecutor(new RefreshPlayersCommand(handler));
         getCommand("queryplayer").setExecutor(new QueryPlayerCommand(handler));
+
+        verbosity = Verbosity.parseFlags(getConfig().getInt("debugLevel", 0));
     }
 
     public void onDisable() {

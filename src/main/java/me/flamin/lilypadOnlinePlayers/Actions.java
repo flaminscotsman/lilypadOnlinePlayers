@@ -10,7 +10,7 @@ public enum Actions {
     LEGACY_VANISH(3),         // 3  | name
     LEGACY_SHOW(4),           // 4  | name
     RESEND(5),                // 5
-    ADD(6),                   // 6  | name | uuid | server | world | visibility
+    ADD(6),                   // 6  | name | uuid | world | visibility
     REMOVE(7),                // 7  | name | uuid
     MOVEWORLD(8),             // 8  | name | uuid | world
     VANISH(9),                // 9  | name | uuid

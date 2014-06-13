@@ -3,6 +3,7 @@ package me.flamin.lilypadOnlinePlayers;
 import org.bukkit.entity.Player;
 
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.Map;
 
 public class LilypadOnlinePlayersHandler {
@@ -13,6 +14,8 @@ public class LilypadOnlinePlayersHandler {
     }
 
     public LilypadOnlinePlayers getPlugin() { return plugin; }
+
+    public boolean isLogged(Verbosity.VerbosityLevels level) { return plugin.verbosity.contains(level); }
 
     public boolean isVisible(Player player) { return plugin.isVisible(player); }
 

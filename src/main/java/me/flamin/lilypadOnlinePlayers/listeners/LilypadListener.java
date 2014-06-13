@@ -3,18 +3,17 @@ package me.flamin.lilypadOnlinePlayers.listeners;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
+import javax.annotation.Nonnull;
 import lilypad.client.connect.api.event.EventListener;
 import lilypad.client.connect.api.event.MessageEvent;
 import lilypad.client.connect.api.event.ServerAddEvent;
 import lilypad.client.connect.api.event.ServerRemoveEvent;
-import me.flamin.lilypadOnlinePlayers.Actions;
-import me.flamin.lilypadOnlinePlayers.LilypadOnlinePlayers;
-import me.flamin.lilypadOnlinePlayers.LilypadOnlinePlayersHandler;
-import me.flamin.lilypadOnlinePlayers.PlayerEntry;
+import me.flamin.lilypadOnlinePlayers.*;
 import me.flamin.lilypadOnlinePlayers.events.HubPlayerJoinEvent;
 import me.flamin.lilypadOnlinePlayers.events.HubPlayerQuitEvent;
 import me.flamin.lilypadOnlinePlayers.events.HubPlayerVisibilityChangeEvent;
 import me.flamin.lilypadOnlinePlayers.events.HubPlayerWorldChangeEvent;
+import me.flamin.lilypadOnlinePlayers.packets.*;
 import org.bukkit.entity.Player;
 
 import javax.annotation.Nullable;
@@ -23,7 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 public class LilypadListener {
-    private static final String channelname = "lilypadPlayers";
+    private static final String channelname = LilypadOnlinePlayers.channelname;
     private static final Joiner joiner = Joiner.on(", ").skipNulls();
     private final LilypadOnlinePlayersHandler handler;
     private final LilypadOnlinePlayers plugin;
@@ -40,7 +39,7 @@ public class LilypadListener {
                 String[] tokens;
                 tokens = event.getMessageAsString().split("\\x00");
 
-                if (plugin.getConfig().getInt("debugLevel", 0) > 3) {
+                if (handler.isLogged(Verbosity.VerbosityLevels.SHOW_PACKETS)) {
                     String parsedString = formatString(event.getMessage());
                     plugin.getLogger().severe(String.format("[%1$s] - Message received from %2$s: %3$s",
                             plugin.getDescription().getName(), event.getSender(), parsedString));
@@ -48,112 +47,162 @@ public class LilypadListener {
 
                 Actions action = Actions.get(Integer.parseInt(tokens[0]));
                 PlayerEntry entry;
+                AbstractPacket packet;
 
                 switch (action) {
-                    case ADD: case LEGACY_ADD:
-                        entry = new PlayerEntry();
+                    case ADD:
+                        packet = new Packet_ADD();
+                        packet.decode(tokens, event.getSender());
 
-                        entry.setName(tokens[1]);
-                        if (action == Actions.ADD) {
-                            entry.setUUID(tokens[2]);
-                            entry.setServer(tokens[3]);
-                            entry.setVisible(Boolean.valueOf(tokens[5]));
-                            entry.setWorld(tokens[4]);
-                        } else if (action == Actions.LEGACY_ADD) {
-                            // TODO: Add uuid parsing
-                            entry.setServer(tokens[2]);
-                            entry.setVisible(Boolean.valueOf(tokens[4]));
-                            entry.setWorld(tokens[3]);
-                        }
+                        entry = handler.containsPlayer(packet.getPlayer()) ? handler.getPlayer(packet.getPlayer()) : new PlayerEntry();
+                        packet.updatePlayerEntry(entry);
 
-                        if (plugin.getConfig().getInt("debugLevel", 0) > 0)
-                            plugin.getLogger().severe("Player " + tokens[1] + " has joined " + tokens[3]
-                                    + ". Entry Contains: " + entry.getName() + ", " + entry.getWorld() + ", "
-                                    + entry.getVisible() + ".");
+                        if (handler.isLogged(Verbosity.VerbosityLevels.SHOW_MOVEMENTS))
+                            plugin.getLogger().severe(String.format("[%1$s] - Player %2$s %3$s joined %4$s.",
+                                    plugin.getDescription().getName(),
+                                    (
+                                        handler.isLogged(Verbosity.VerbosityLevels.SHOW_UUIDS) ?
+                                        entry.getName() + " [" + entry.getUUID().toString() + "]" :
+                                        entry.getName()
+                                    ),
+                                    (entry.getVisible()?"visibly":"invisibly"),
+                                    event.getSender()
+                            ));
 
-                        if (plugin.getConfig().getInt("debugLevel", 0) > 2 && handler.isPlayerExpired(tokens[1]))
-                            plugin.getLogger().severe("Unexpiring " + tokens[1] + " on rejoin.");
+                        if (handler.isLogged(Verbosity.VerbosityLevels.SHOW_EXPIRATIONS) && handler.isPlayerExpired(tokens[1]))
+                            plugin.getLogger().severe("Unexpiring " + entry.getName() + " on rejoin.");
 
                         if (handler.isPlayerExpired(tokens[1]))
                             handler.unExpirePlayer(tokens[1]);
 
-                        handler.addPlayer(tokens[1], entry);
+                        handler.addPlayer(entry.getName(), entry);
+
                         plugin.getServer().getPluginManager().callEvent(new HubPlayerJoinEvent(entry));
                         break;
-                    case REMOVE: case LEGACY_REMOVE:
-                        if (!handler.containsPlayer(tokens[1]))
+
+                    case REMOVE:
+                        packet = new Packet_REMOVE();
+                        packet.decode(tokens, event.getSender());
+
+                        PlayerEntry packetEntry = new PlayerEntry();
+                        packet.updatePlayerEntry(packetEntry);
+
+                        if (!handler.containsPlayer(packetEntry.getName()))
                             return;
 
-                        entry = handler.getPlayer(tokens[1]);
+                        entry = handler.getPlayer(packetEntry.getName());
 
-                        if (plugin.getConfig().getInt("debugLevel", 0) > 0)
-                            plugin.getLogger().severe("Player " + tokens[1] + " has left " + event.getSender() +
-                                    ". Entry Contains: " + entry.getName() + ", " + entry.getServer() + ", " + entry.getVisible() + ".");
-                        if (plugin.getConfig().getInt("debugLevel", 0) > 2) {
+                        if (handler.isLogged(Verbosity.VerbosityLevels.SHOW_MOVEMENTS))
+                            if (handler.isLogged(Verbosity.VerbosityLevels.SHOW_MOVEMENTS))
+                                plugin.getLogger().severe(String.format("[%1$s] - Player %2$s quit %3$s.",
+                                        plugin.getDescription().getName(),
+                                        (
+                                                handler.isLogged(Verbosity.VerbosityLevels.SHOW_UUIDS) ?
+                                                        entry.getName() + " [" + entry.getUUID().toString() + "]" :
+                                                        entry.getName()
+                                        ),
+                                        event.getSender()
+                                ));
+
+                        if (handler.isLogged(Verbosity.VerbosityLevels.SHOW_EXPIRATIONS)) {
                             if (event.getSender().equals(entry.getServer())) {
-                                plugin.getLogger().severe("Expiring " + tokens[1] + " on quit.");
+                                plugin.getLogger().severe("Expiring " + entry.getName() + " on quit.");
                             } else {
-                                plugin.getLogger().severe("Not expiring " + tokens[1] + " due to current server mismatch.");
+                                plugin.getLogger().severe("Not expiring " + entry.getName() + " as they are currently on this server.");
                             }
                         }
 
                         if (!event.getSender().equals(entry.getServer()))
                             break;
 
-                        handler.expirePlayer(tokens[1]);
+                        handler.expirePlayer(entry.getName());
                         plugin.getServer().getScheduler().runTaskLater(
                                 plugin, new tidyUp(handler, entry.getName()), 1
                         );
 
-                        if (action == Actions.REMOVE) {
-                            plugin.getServer().getPluginManager().callEvent(new HubPlayerQuitEvent(tokens[1], tokens[2]));
-                        }else {
-                            if (handler.containsPlayer(tokens[1])) {
-                                plugin.getServer().getPluginManager().callEvent(new HubPlayerQuitEvent(handler.getPlayer(tokens[1])));
-                            } else {
-                                plugin.getServer().getPluginManager().callEvent(new HubPlayerQuitEvent(tokens[1]));
-                            }
-                        }
+                        plugin.getServer().getPluginManager().callEvent(new HubPlayerQuitEvent(tokens[1], tokens[2]));
                         break;
-                    case MOVEWORLD: case LEGACY_MOVEWORLD:
-                        entry = handler.getPlayer(tokens[1]);
-                        if (plugin.getConfig().getInt("debugLevel", 0) > 0)
-                            plugin.getLogger().severe("Player " + tokens[1] + " has switched from "+ entry.getWorld()
-                                    + " to " + tokens[2 + ((action == Actions.MOVEWORLD)?1:0)] + ".");
 
-                        entry.setWorld(tokens[2 + ((action == Actions.MOVEWORLD)?1:0)]);
+                    case MOVEWORLD:
+                        packet = new Packet_MOVEWORLD();
+                        packet.decode(tokens, event.getSender());
 
-                        handler.addPlayer(tokens[1], entry);
+                        entry = handler.containsPlayer(packet.getPlayer()) ? handler.getPlayer(packet.getPlayer()) : new PlayerEntry();
+
+                        if (handler.isLogged(Verbosity.VerbosityLevels.SHOW_MOVEMENTS))
+                            plugin.getLogger().severe(String.format(
+                                    "[%1$s] - Player %2$s has switched from %3$s to %4$s.",
+                                    plugin.getDescription().getName(),
+                                    entry.getName(),
+                                    entry.getWorld(),
+                                    packet.getWorld()
+                            ));
+
+                        packet.updatePlayerEntry(entry);
+                        handler.addPlayer(entry.getName(), entry);
+
                         plugin.getServer().getPluginManager().callEvent(new HubPlayerWorldChangeEvent(entry));
                         break;
-                    case VANISH: case LEGACY_VANISH:
-                        entry = handler.getPlayer(tokens[1]);
-                        if (plugin.getConfig().getInt("debugLevel", 0) > 0)
-                            plugin.getLogger().severe("Player " + tokens[1] + " has become invisible.");
 
-                        entry.setVisible(false);
-                        handler.addPlayer(tokens[1], entry);
+                    case VANISH:
+                        packet = new Packet_VANISH();
+                        packet.decode(tokens, event.getSender());
+
+                        entry = handler.containsPlayer(packet.getPlayer()) ? handler.getPlayer(packet.getPlayer()) : new PlayerEntry();
+
+                        if (handler.isLogged(Verbosity.VerbosityLevels.SHOW_MOVEMENTS))
+                            plugin.getLogger().severe(String.format(
+                                    "[%1$s] - Player %2$s has become invisible.",
+                                    plugin.getDescription().getName(),
+                                    entry.getName()
+                            ));
+
+                        packet.updatePlayerEntry(entry);
+                        handler.addPlayer(entry.getName(), entry);
+
                         plugin.getServer().getPluginManager().callEvent(new HubPlayerVisibilityChangeEvent(entry));
                         break;
-                    case SHOW: case LEGACY_SHOW:
-                        entry = handler.getPlayer(tokens[1]);
-                        if (plugin.getConfig().getInt("debugLevel", 0) > 0)
-                            plugin.getLogger().severe("Player " + tokens[1] + " has become visible.");
 
-                        entry.setVisible(true);
-                        handler.addPlayer(tokens[1], entry);
+                    case SHOW:
+                        packet = new Packet_SHOW();
+                        packet.decode(tokens, event.getSender());
+
+                        entry = handler.containsPlayer(packet.getPlayer()) ? handler.getPlayer(packet.getPlayer()) : new PlayerEntry();
+
+                        if (handler.isLogged(Verbosity.VerbosityLevels.SHOW_MOVEMENTS))
+                            plugin.getLogger().severe(String.format(
+                                    "[%1$s] - Player %2$s has become visible.",
+                                    plugin.getDescription().getName(),
+                                    entry.getName()
+                            ));
+
+                        packet.updatePlayerEntry(entry);
+                        handler.addPlayer(entry.getName(), entry);
+
                         plugin.getServer().getPluginManager().callEvent(new HubPlayerVisibilityChangeEvent(entry));
                         break;
+
                     case RESEND:
                         for (Player player : plugin.getServer().getOnlinePlayers()) {
-                            String msg = Actions.ADD.getIDString() + '\0' + player.getName() + '\0' +
-                                    handler.getServerName() + '\0' + player.getWorld().getName() + '\0' +
-                                    handler.isVisible(player);
-                            plugin.dispatchMessage(channelname, msg);
+                            packet = new Packet_ADD();
+                            packet.encode(player, handler);
+                            plugin.dispatchMessage(channelname, packet.toString());
                         }
                         break;
+
+                    case LEGACY_ADD: case LEGACY_REMOVE: case LEGACY_MOVEWORLD: case LEGACY_VANISH: case LEGACY_SHOW:
+                        plugin.getLogger().severe(String.format(
+                                "[%s] - Outdated message received from %s.",
+                                plugin.getDescription().getName(),
+                                event.getSender()
+                        ));
+
                     default:
-                        plugin.getLogger().severe(String.format("[%s] - Malformed message received", plugin.getDescription().getName()));
+                        plugin.getLogger().severe(String.format(
+                                "[%s] - Malformed message received from %s",
+                                plugin.getDescription().getName(),
+                                event.getSender()
+                        ));
                 }
             } catch (UnsupportedEncodingException e1) {
                 e1.printStackTrace();
@@ -163,15 +212,22 @@ public class LilypadListener {
 
     @EventListener
     public void onServerRemove(final ServerRemoveEvent event) {
-        if (plugin.getConfig().getInt("debugLevel", 0) > 1) {
+        if (handler.isLogged(Verbosity.VerbosityLevels.SHOW_MOVEMENTS)) {
             Predicate<PlayerEntry> playerFilter = new Predicate<PlayerEntry>() {
                 @Override
-                public boolean apply(@Nullable PlayerEntry entry) {
+                public boolean apply(@Nonnull PlayerEntry entry) {
                     return entry.getServer().equals(event.getServer());
                 }
             };
-            plugin.getLogger().severe("Lost connection with " + event.getServer() + ". Expiring: " + joiner.join(Iterables.filter(handler.getPlayers().values(), playerFilter)) + ".");
+
+            plugin.getLogger().severe(String.format(
+                    "[%1$s] - Lost connection with %2$s. Expiring: %3$s.",
+                    plugin.getDescription().getName(),
+                    event.getServer(),
+                    joiner.join(Iterables.filter(handler.getPlayers().values(), playerFilter))
+            ));
         }
+
         for (Map.Entry<String, PlayerEntry> iterEntry : handler.getPlayers().entrySet()) {
             PlayerEntry entry = iterEntry.getValue();
 
@@ -183,24 +239,38 @@ public class LilypadListener {
 
     @EventListener
     public void onServerAdd(final ServerAddEvent event) {
-        if (plugin.getConfig().getInt("debugLevel", 0) > 1) {
+        if (handler.isLogged(Verbosity.VerbosityLevels.SHOW_MOVEMENTS)) {
             if (event.getServer().equals(plugin.getServer().getName())) {
-                plugin.getLogger().severe("Connection with " + event.getServer() + "established.");
+                plugin.getLogger().severe(String.format(
+                        "[%1$s] - Connection with %2$s established.",
+                        plugin.getDescription().getName(),
+                        event.getServer()
+                ));
             } else {
-                plugin.getLogger().severe("Regained connection with network");
+                plugin.getLogger().severe(String.format(
+                        "[%1$s] - Regained connection with network",
+                        plugin.getDescription().getName()
+                ));
             }
         }
+
+        AbstractPacket packet;
+
         if (event.getServer().equals(plugin.getServer().getName())) {
             for (Player player : plugin.getServer().getOnlinePlayers()) {
-                String msg = Actions.ADD.getIDString() + '\0' + player.getName() + '\0' + player.getServer().getName() + '\0' + player.getWorld().getName() + '\0' + handler.isVisible(player);
-                plugin.dispatchMessage(channelname, msg);
+                packet = new Packet_ADD();
+                packet.encode(player, handler);
+                plugin.dispatchMessage(channelname, packet.toString());
             }
         } else {
             String target = event.getServer();
+
             for (Player player : plugin.getServer().getOnlinePlayers()) {
-                String msg = Actions.ADD.getIDString() + '\0' + player.getName() + '\0' + player.getServer().getName() + '\0' + player.getWorld().getName() + '\0' + handler.isVisible(player);
-                plugin.dispatchMessage(target, channelname, msg);
+                packet = new Packet_ADD();
+                packet.encode(player, handler);
+                plugin.dispatchMessage(target, channelname, packet.toString());
             }
+
             for (Map.Entry<String, PlayerEntry> entry : handler.getPlayers().entrySet()) {
                 if (entry.getValue().getServer().equals(event.getServer()) && handler.isPlayerExpired(entry.getKey())) {
                     handler.unExpirePlayer(entry.getKey());

@@ -5,6 +5,8 @@ import me.flamin.lilypadOnlinePlayers.LilypadOnlinePlayersHandler;
 import me.flamin.lilypadOnlinePlayers.LilypadOnlinePlayers;
 import me.flamin.lilypadOnlinePlayers.PlayerEntry;
 import me.flamin.lilypadOnlinePlayers.events.HubPlayerQuitEvent;
+import me.flamin.lilypadOnlinePlayers.packets.AbstractPacket;
+import me.flamin.lilypadOnlinePlayers.packets.Packet_REMOVE;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -60,8 +62,9 @@ public class ForceRemoveCommand implements CommandExecutor {
             return false;
         }
 
-        String msg =  Actions.REMOVE.getIDString() + '\0' + player + '\0' + handler.getServerName();
-        plugin.dispatchMessage(channelname, msg);
+        AbstractPacket packet = new Packet_REMOVE();
+        packet.encode(player);
+        plugin.dispatchMessage(channelname, packet.toString());
 
         handler.expirePlayer(player.getName());
         plugin.getServer().getScheduler().runTaskLater(plugin, new tidyUp(handler, player.getName()), 1);
