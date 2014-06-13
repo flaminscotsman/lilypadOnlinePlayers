@@ -11,7 +11,7 @@ public class Verbosity {
      * @return EnumSet representing verbosity
      */
     public static EnumSet<VerbosityLevels> parseFlags(long verbosity) {
-        EnumSet flags = EnumSet.noneOf(VerbosityLevels.class);
+        EnumSet<VerbosityLevels> flags = EnumSet.noneOf(VerbosityLevels.class);
         for (VerbosityLevels level : EnumSet.allOf(VerbosityLevels.class)) {
             if ((level.getLevel() & verbosity) == level.getLevel()) {
                 flags.add(level);

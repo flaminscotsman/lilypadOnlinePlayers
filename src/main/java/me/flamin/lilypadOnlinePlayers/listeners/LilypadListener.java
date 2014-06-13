@@ -196,6 +196,7 @@ public class LilypadListener {
                                 plugin.getDescription().getName(),
                                 event.getSender()
                         ));
+                        break;
 
                     default:
                         plugin.getLogger().severe(String.format(
